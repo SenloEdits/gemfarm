@@ -1,3 +1,30 @@
+-- First Execution: Loop vote_start 5 times with a 3-second delay
+
+local keepLooping = true -- Set to true to begin looping
+
+-- Function to safely invoke the server method
+local function safeInvoke(callback)
+    local success, err = pcall(callback)
+    if not success then
+        warn("Error invoking server method:", err)
+    end
+end
+
+-- Execute the vote_start loop 5 times with a 3-second delay
+for i = 1, 5 do
+    spawn(function()
+        if keepLooping then
+            safeInvoke(function()
+                game:GetService("ReplicatedStorage").endpoints.client_to_server.vote_start:InvokeServer()
+            end)
+        end
+    end)
+    wait(3) -- 3-second delay between executions
+end
+
+-- Stop looping after the fifth iteration
+keepLooping = false
+
 -- Initial Execution Phase
 
 -- First set of arguments
@@ -83,3 +110,17 @@ while true do
     executeAizenUpgrades()
     task.wait(5)
 end
+
+-- Final Execution Phase: Loop set_game_finished_vote every 10 seconds indefinitely
+
+spawn(function()
+    while true do
+        local args = {
+            [1] = "replay"
+        }
+        safeInvoke(function()
+            game:GetService("ReplicatedStorage").endpoints.client_to_server.set_game_finished_vote:InvokeServer(unpack(args))
+        end)
+        wait(10)  -- Delay of 10 seconds between each execution
+    end
+end)
